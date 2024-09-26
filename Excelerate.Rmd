@@ -1,0 +1,206 @@
+---
+title: "Excelerate"
+author: "Zelibe_Samuel"
+date: "2024-09-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Installing and loading packages
+```{r}
+install.packages("tidyverse")
+install.packages("lubridate")
+install.packages("ggplot2")
+install.packages("janitor")
+install.packages("ggalt")
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(janitor)
+library(readr)
+library(tidyr)
+library(readr)
+library(dplyr)
+library(ggalt)
+```
+
+## Import and Rename Data files
+
+```{r}
+Owdf <- read_csv("/cloud/project/Opportunity Data Cleaned.csv")
+Udf <- read_csv("/cloud/project/UserData (2) Cleaned.csv")
+```
+
+## Checking The Number Of Rows, Data Dimension and The First Six Rows 
+
+```{r}
+nrow(Owdf)
+nrow (Udf)
+```
+```{r}
+dim(Owdf)
+dim(Udf)
+```
+```{r}
+head(Owdf)
+head(Udf)
+```
+
+```{r}
+Owdf %>% distinct(`Profile Id`)
+unique_profiles_with_opportunities <- Owdf %>% distinct(`Profile Id`) %>% 
+nrow()
+```
+```{r}
+total_signed_up <- 20321
+
+chart_data <- data.frame(
+  Total_Signed_Up = c(total_signed_up),
+  Unique_Profiles_with_Opportunities = c(unique_profiles_with_opportunities))
+
+ggplot(chart_data, aes(x = Total_Signed_Up, y = Unique_Profiles_with_Opportunities)) +
+  geom_point(size = 4, color = "blue") +
+  geom_text(aes(label = paste("Total Signed Up:", Total_Signed_Up, "\nUnique Profiles with Opportunities:", Unique_Profiles_with_Opportunities)), vjust = -1) +
+  labs(title = "Platform Engagement", x = "Total Signed Up", y = "Unique Profiles with Opportunities")
+```
+##  Top 10 countries learners have signed up from
+```{r}
+length(unique(Owdf$Country))
+sort(table(Owdf$Country), decreasing = TRUE)[1:10]
+```
+
+```{r}
+country_counts <- table(Owdf$Country)
+top_10_countries <- names(sort(country_counts, decreasing = TRUE)[1:10])
+filtered_data <- Owdf[Owdf$Country %in% top_10_countries, ]
+
+ggplot(filtered_data, aes(x = Country)) +
+  geom_bar() +
+  labs(title = "Top 10 Countries", x = "Country", y = "Frequency") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Cities in the US learners have signed up from
+```{r}
+Owdf_USA <- Owd %>% filter(Country == "United States") %>% arrange(desc(City))
+Owdf_USA %>% distinct(City)
+```
+```{r}
+unique_cities <- Owdf_USA %>% distinct(City)
+
+ggplot(unique_cities, aes(x = City)) +
+  geom_bar() +
+  labs(title = "US Cities in Owdf", x = "City", y = "Frequency") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Most popular opportunity learners have signed up for
+
+```{r}
+most_popular_opportunity <- names(which.max(table(Owdf$`Opportunity Name`)))
+
+chart_data <- data.frame(
+  Opportunity = c(most_popular_opportunity, "Others"),
+  Count = c(table(Owdf$`Opportunity Name`)[most_popular_opportunity],
+            sum(table(Owdf$`Opportunity Name`)) - table(Owdf$`Opportunity Name`)[most_popular_opportunity]))
+
+ggplot(chart_data, aes(x = "", y = Count, fill = Opportunity)) +
+  geom_bar(stat = "identity", color = "white") +
+  coord_polar(theta = "y", start = 0) +
+  labs(title = "Most Popular Opportunity") +
+  theme_void()
+```
+
+## Most popular opportunity learners have completed
+
+```{r}
+
+Owdf_Nam <- Owdf %>% filter(`Status Description` == "Rewards Award") %>% arrange(desc(`Opportunity Name`))
+most_popular_opportunity <- names(which.max(table(Owdf_Nam$`Opportunity Name`)))
+```
+
+```{r}
+chart_data <- data.frame(
+  Opportunity = c(most_popular_opportunity, "All Other Opportunities"),
+  Count = c(table(Owdf_Nam$`Opportunity Name`)[most_popular_opportunity],
+            sum(table(Owdf_Nam$`Opportunity Name`)) - table(Owdf_Nam$`Opportunity Name`)[most_popular_opportunity])
+)
+
+ggplot(chart_data, aes(x = Opportunity, y = Count)) +
+  geom_lollipop(color = "skyblue") +
+  labs(title = "Most Popular Completed Opportunity", x = "Opportunity", y = "Count")
+```
+
+## The demographic breakdown gender of those who have signed up and completed
+
+```{r}
+
+Owdf_Nam <- Owdf %>% filter(`Status Description` == "Rewards Award") %>% arrange(desc(`Opportunity Name`))
+gender_counts <- Owdf_Nam %>% group_by(Gender) %>% summarise(count = n_distinct(`Profile Id`))
+```
+
+```{r}
+ggplot(gender_counts, aes(x = Gender, y = count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Gender Demographic Breakdown", x = "Gender", y = "Count")
+```
+
+## the demographic breakdown student status, etc of those who have signed up and completed
+
+```{r}
+Owdf_Nams<- Owdf %>% filter(`Status Description` == "Rewards Award") %>% arrange(desc(`Opportunity Name`))
+student_status_count <- Owdf_Nam %>% group_by(`Current Student Status`) %>%
+  summarise(count = n_distinct(`Profile Id`))
+```
+
+```{r}
+ggplot(student_status_count, aes(x = `Current Student Status`, y = count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Distribution of Student Status Counts", x = "Current Student Status", y = "Count")
+```
+
+## The most gained skills on Excelerate
+
+```{r}
+Owdf_Nam <- Owdf %>% filter(`Status Description` == "Rewards Award") %>% arrange(desc(`Opportunity Name`))
+skill_counts <- Owdf_Nam %>% group_by(`Skills Earned`) %>% summarise(count = n_distinct(`Profile Id`))
+
+skill_counts_sorted <- skill_counts[order(-skill_counts$count), ]
+```
+
+
+## The total scholarship awarded and through which opportunities
+
+```{r}
+Owdf_Nam <- Owdf %>% filter(`Status Description` == "Rewards Award") %>% arrange(desc(`Opportunity Name`))
+
+opportunity_rewards <- Owdf_Nam %>%
+  group_by(`Opportunity Name`) %>%
+  summarize(`sum_reward` = sum(`Reward Amount`))
+print(opportunity_rewards)
+```
+
+```{r}
+most_scholarship_opportunity <- opportunity_rewards %>%
+  arrange(desc(`sum_reward`)) %>%
+  head(1)
+print(most_scholarship_opportunity)
+```
+
+```{r}
+ggplot(opportunity_rewards, aes(x = reorder(`Opportunity Name`, `sum_reward`), y = `sum_reward`)) +
+  geom_lollipop(color = "orange") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Diverging Lollipop Chart: Total Rewards by Opportunity",
+       x = "Opportunity Name",
+       y = "Total Reward Amount") +
+  coord_flip() +
+  theme_minimal()
+```
+
+
+
